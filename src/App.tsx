@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Moon, Sun, Settings } from 'lucide-react';
+import { Calendar, Moon, Sun, Settings } from 'lucide-react'; // Import Settings icon
 
 interface Task {
   id: string;
@@ -23,47 +23,26 @@ const initialTasks: Task[] = [
 ];
 
 function App() {
-  const [currentDay, setCurrentDay] = useState<number>(() => {
-    const savedDay = localStorage.getItem('currentDay');
-    return savedDay ? parseInt(savedDay, 10) : 0;
-  });
-  const [title, setTitle] = useState<string>(() => {
-    return localStorage.getItem('title') || 'Project Timeline';
-  });
+  const [currentDay, setCurrentDay] = useState(0); // Start from day 0
+  const [title, setTitle] = useState("Project Timeline");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    const savedMode = localStorage.getItem('isDarkMode');
-    return savedMode === 'true';
-  });
-  const [isRunning, setIsRunning] = useState<boolean>(() => {
-    const savedRunning = localStorage.getItem('isRunning');
-    return savedRunning === 'true';
-  });
-  const [startTime, setStartTime] = useState<number | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    const savedLoggedIn = localStorage.getItem('isLoggedIn');
-    return savedLoggedIn === 'true';
-  });
-  const [userRole, setUserRole] = useState<'admin' | 'viewer' | null>(() => {
-    const savedRole = localStorage.getItem('userRole');
-    return savedRole === 'admin' || savedRole === 'viewer' ? savedRole : null;
-  });
-  const [tasks, setTasks] = useState<Task[]>(() => {
-    const savedTasks = localStorage.getItem('tasks');
-    return savedTasks ? JSON.parse(savedTasks) : initialTasks;
-  });
-  const [isChangingCredentials, setIsChangingCredentials] = useState(false);
-  const [newUsername, setNewUsername] = useState('');
-  const [newPassword, setNewPassword] = useState('');
+  const [isDarkMode, setIsDarkMode] = useState(false); // Dark mode state
+  const [isRunning, setIsRunning] = useState(false); // State for Start/Stop button
+  const [startTime, setStartTime] = useState<number | null>(null); // Track when the timer started
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Track login state
+  const [userRole, setUserRole] = useState<'admin' | 'viewer' | null>(null); // Track user role
+  const [tasks, setTasks] = useState<Task[]>(initialTasks); // State for tasks
+  const [isChangingCredentials, setIsChangingCredentials] = useState(false); // Track if changing credentials
+  const [newUsername, setNewUsername] = useState(''); // New username
+  const [newPassword, setNewPassword] = useState(''); // New password
 
-  const [users, setUsers] = useState(() => {
-    const savedUsers = localStorage.getItem('users');
-    return savedUsers ? JSON.parse(savedUsers) : [
-      { username: 'admin', password: 'admin123', role: 'admin' },
-      { username: 'viewer', password: 'viewer123', role: 'viewer' }
-    ];
-  });
+  // Hardcoded credentials (for demo purposes only)
+  const [users, setUsers] = useState([
+    { username: 'admin', password: 'admin123', role: 'admin' },
+    { username: 'viewer', password: 'viewer123', role: 'viewer' }
+  ]);
 
+  // Calculate total duration dynamically
   const getTaskStart = (task: Task): number => {
     if (task.dependencies.length === 0) return 0;
     return Math.max(...task.dependencies.map(depId => {
@@ -74,25 +53,24 @@ function App() {
 
   const totalDuration = Math.max(...tasks.map(task => getTaskStart(task) + task.duration));
 
+  // Login function
   const handleLogin = (username: string, password: string) => {
     const user = users.find(u => u.username === username && u.password === password);
     if (user) {
       setIsLoggedIn(true);
       setUserRole(user.role);
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('userRole', user.role);
     } else {
       alert('Invalid credentials');
     }
   };
 
+  // Logout function
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUserRole(null);
-    localStorage.setItem('isLoggedIn', 'false');
-    localStorage.removeItem('userRole');
   };
 
+  // Save to localStorage whenever state changes
   useEffect(() => {
     localStorage.setItem('currentDay', currentDay.toString());
   }, [currentDay]);
@@ -103,43 +81,33 @@ function App() {
 
   useEffect(() => {
     localStorage.setItem('isDarkMode', isDarkMode.toString());
-    document.documentElement.classList.toggle('dark', isDarkMode);
   }, [isDarkMode]);
 
-  useEffect(() => {
-    localStorage.setItem('isRunning', isRunning.toString());
-  }, [isRunning]);
-
-  useEffect(() => {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-  }, [tasks]);
-
-  useEffect(() => {
-    localStorage.setItem('users', JSON.stringify(users));
-  }, [users]);
-
+  // Real-time timer logic
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isRunning) {
-      const startTimestamp = Date.now() - currentDay * 1000;
+      const startTimestamp = Date.now() - currentDay * 1000; // Calculate the start time
       setStartTime(startTimestamp);
 
       interval = setInterval(() => {
-        const elapsedTime = Math.floor((Date.now() - startTimestamp) / 1000);
-        const elapsedDays = (elapsedTime / (24 * 60 * 60)) * totalDuration;
+        const elapsedTime = Math.floor((Date.now() - startTimestamp) / 1000); // Calculate elapsed time in seconds
+        const elapsedDays = (elapsedTime / (24 * 60 * 60)) * totalDuration; // Convert seconds to days based on total duration
         setCurrentDay(elapsedDays);
-      }, 1000);
+      }, 1000); // Update every second
     } else {
-      setStartTime(null);
+      setStartTime(null); // Reset start time when stopped
     }
 
-    return () => clearInterval(interval);
+    return () => clearInterval(interval); // Cleanup interval on unmount or stop
   }, [isRunning]);
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
+    document.documentElement.classList.toggle('dark');
   };
 
+  // Update task duration
   const updateTaskDuration = (taskId: string, newDuration: number) => {
     setTasks((prevTasks) =>
       prevTasks.map((task) =>
@@ -148,11 +116,13 @@ function App() {
     );
   };
 
+  // Reset timer
   const resetTimer = () => {
     setCurrentDay(0);
-    setIsRunning(false);
+    setIsRunning(false); // Stop the timer when resetting
   };
 
+  // Change credentials
   const handleChangeCredentials = () => {
     setIsChangingCredentials(true);
   };
@@ -172,6 +142,7 @@ function App() {
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} p-8 transition-colors duration-200`}>
       <div className="max-w-6xl mx-auto">
+        {/* Login Form */}
         {!isLoggedIn ? (
           <div className={`rounded-lg shadow-lg p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
             <div className="flex items-center justify-between mb-6">
@@ -292,6 +263,7 @@ function App() {
               </div>
             </div>
 
+            {/* Change Credentials Form */}
             {isChangingCredentials && (
               <div className="mb-6">
                 <h3 className={`text-xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} mb-4`}>Change Credentials</h3>
@@ -342,6 +314,7 @@ function App() {
               </div>
             )}
 
+            {/* Task Timeline */}
             <div className="overflow-x-auto">
               <div className="min-w-[800px]">
                 {tasks.map(task => {
@@ -407,6 +380,7 @@ function App() {
               </div>
             </div>
 
+            {/* Total Duration */}
             <div className="mt-6 border-t pt-4">
               <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                 <p>Total Duration: {totalDuration} days</p>
