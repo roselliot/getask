@@ -18,7 +18,21 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+
+    /* Type Definitions */
+    "typeRoots": ["./node_modules/@types", "./src/types"], // Include custom type definitions
+
+    /* Paths */
+    "baseUrl": "./src", // Base directory for path resolution
+    "paths": {
+      "@/*": ["./*"] // Alias for src directory
+    },
+
+    /* Additional Checks */
+    "esModuleInterop": true, // Enable ES module interop
+    "resolveJsonModule": true // Allow importing JSON files
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "build"]
 }

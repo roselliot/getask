@@ -28,7 +28,7 @@ function App() {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false); // Dark mode state
   const [isRunning, setIsRunning] = useState(false); // State for Start/Stop button
-  const [startTime, setStartTime] = useState<number | null>(null); // Track when the timer started
+  const [, setStartTime] = useState<number | null>(null); // Track when the timer started
   const [isLoggedIn, setIsLoggedIn] = useState(false); // Track login state
   const [userRole, setUserRole] = useState<'admin' | 'viewer' | null>(null); // Track user role
   const [tasks, setTasks] = useState<Task[]>(initialTasks); // State for tasks
@@ -58,7 +58,7 @@ function App() {
     const user = users.find(u => u.username === username && u.password === password);
     if (user) {
       setIsLoggedIn(true);
-      setUserRole(user.role);
+      setUserRole(user.role as 'admin' | 'viewer'); // Ensure type safety
     } else {
       alert('Invalid credentials');
     }
@@ -100,7 +100,7 @@ function App() {
     }
 
     return () => clearInterval(interval); // Cleanup interval on unmount or stop
-  }, [isRunning]);
+  }, [isRunning, totalDuration]);
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
