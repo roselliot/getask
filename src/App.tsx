@@ -26,7 +26,7 @@ const initialTasks: Task[] = [
   { id: 'cleaning', name: 'Nettoyage', duration: 1, dependencies: ['woodwork', 'accessories', 'parquet'] },
 ];
 
-function SortableTask({ task, isDarkMode, userRole, updateTaskDuration, removeTask, currentDay, totalDuration }: {
+function SortableTask({ task, isDarkMode, userRole, updateTaskDuration, currentDay, totalDuration, openRemoveModal }: {
   task: Task;
   isDarkMode: boolean;
   userRole: 'admin' | 'viewer' | null;
@@ -34,6 +34,7 @@ function SortableTask({ task, isDarkMode, userRole, updateTaskDuration, removeTa
   removeTask: (taskId: string) => void;
   currentDay: number;
   totalDuration: number;
+  openRemoveModal: (taskId: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: task.id });
 
@@ -110,7 +111,7 @@ function SortableTask({ task, isDarkMode, userRole, updateTaskDuration, removeTa
             min="1"
           />
           <button
-            onClick={() => removeTask(task.id)}
+            onClick={() => openRemoveModal(task.id)}
             className={`px-2 py-1 rounded-md ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} border hover:bg-opacity-80`}
           >
             <Trash className="w-4 h-4" />
@@ -135,6 +136,9 @@ function App() {
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskDuration, setNewTaskDuration] = useState(1);
   const [newTaskDependencies, setNewTaskDependencies] = useState<string[]>([]);
+  const [taskToRemove, setTaskToRemove] = useState<string | null>(null);
+  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
+  const [editedTaskName, setEditedTaskName] = useState('');
 
   const [users] = useState([
     { username: 'admin', password: 'admin123', role: 'admin' },
@@ -142,13 +146,18 @@ function App() {
   ]);
 
   const getTaskStart = (task: Task): number => {
-    if (task.dependencies.length === 0) return 0;
-    return Math.max(
-      ...task.dependencies.map((depId) => {
-        const depTask = tasks.find((t) => t.id === depId)!;
-        return getTaskStart(depTask) + depTask.duration;
-      }),
-    );
+    if (!task || !task.dependencies || task.dependencies.length === 0) return 0;
+
+    const dependencyStarts = task.dependencies.map((depId) => {
+      const depTask = tasks.find((t) => t.id === depId);
+      if (!depTask) {
+        console.error(`Dependency task with ID ${depId} not found.`);
+        return 0; // Return 0 if the dependency task is not found
+      }
+      return getTaskStart(depTask) + depTask.duration;
+    });
+
+    return Math.max(...dependencyStarts);
   };
 
   const totalDuration = Math.max(...tasks.map((task) => getTaskStart(task) + task.duration));
@@ -225,7 +234,24 @@ function App() {
   };
 
   const removeTask = (taskId: string) => {
-    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+    if (!taskId) {
+      console.error("Task ID is missing.");
+      return;
+    }
+
+    setTasks((prevTasks) => {
+      if (!prevTasks || !Array.isArray(prevTasks)) {
+        console.error("Tasks array is invalid.");
+        return prevTasks;
+      }
+
+      const updatedTasks = prevTasks.filter((task) => task.id !== taskId);
+      return updatedTasks;
+    });
+
+    setIsRemoveModalOpen(false);
+    setTaskToRemove(null);
+    setEditedTaskName('');
   };
 
   const resetTimer = () => {
@@ -264,6 +290,27 @@ function App() {
 
         return arrayMove(tasks, oldIndex, newIndex);
       });
+    }
+  };
+
+  const openRemoveModal = (taskId: string) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (task) {
+      setTaskToRemove(taskId);
+      setEditedTaskName(task.name);
+      setIsRemoveModalOpen(true);
+    } else {
+      console.error("Task not found.");
+    }
+  };
+
+  const updateTaskName = () => {
+    if (taskToRemove) {
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === taskToRemove ? { ...task, name: editedTaskName } : task,
+        ),
+      );
     }
   };
 
@@ -445,6 +492,56 @@ function App() {
               </div>
             )}
 
+            {isRemoveModalOpen && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-colors duration-1000">
+                <div className={`p-6 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} z-50 transition-colors duration-1000`}>
+                  <h2 className={`text-xl font-bold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} transition-colors duration-1000`}>Confirm Removal</h2>
+                  <p className={`mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    Are you sure you want to remove this task?
+                  </p>
+                  <input
+                    type="text"
+                    value={editedTaskName}
+                    onChange={(e) => setEditedTaskName(e.target.value)}
+                    className={`w-full px-3 py-2 border rounded mb-4 ${
+                      isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'
+                    } transition-colors duration-1000`}
+                    placeholder="Edit task name"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        if (taskToRemove) {
+                          updateTaskName();
+                          removeTask(taskToRemove);
+                        } else {
+                          console.error("No task selected for removal.");
+                        }
+                      }}
+                      className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors duration-1000"
+                    >
+                      Confirm Removal
+                    </button>
+                    <button
+                      onClick={() => {
+                        updateTaskName();
+                        setIsRemoveModalOpen(false);
+                      }}
+                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors duration-1000"
+                    >
+                      Modify
+                    </button>
+                    <button
+                      onClick={() => setIsRemoveModalOpen(false)}
+                      className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors duration-1000"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={tasks} strategy={verticalListSortingStrategy}>
                 {tasks.map((task) => (
@@ -457,6 +554,7 @@ function App() {
                     removeTask={removeTask}
                     currentDay={currentDay}
                     totalDuration={totalDuration}
+                    openRemoveModal={openRemoveModal}
                   />
                 ))}
               </SortableContext>
