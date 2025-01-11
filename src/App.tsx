@@ -61,28 +61,38 @@ function SortableTask({ task, isDarkMode, userRole, updateTaskDuration, currentD
     <div
       ref={setNodeRef}
       style={style}
-      className={`mb-4 p-4 rounded-lg shadow-sm ${isDarkMode ? 'bg-gray-800' : 'bg-white'} transition-colors duration-1000`} // Added rounded corners and padding
+      className={`mb-4 p-4 rounded-lg shadow-sm ${isDarkMode ? 'bg-gray-800' : 'bg-white'} transition-colors duration-1000`}
     >
       <div className="flex items-center mb-2">
         <div
           {...attributes}
           {...listeners}
-          className="p-2 cursor-grab"
+          className="p-2 cursor-grab transition-colors duration-1000" // Added transition
         >
-          <GripVertical className="w-4 h-4 text-gray-500" />
+          <GripVertical className="w-4 h-4 text-gray-500 transition-colors duration-1000" /> {/* Added transition */}
         </div>
-        <div className={`flex-1 text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>
-          {task.name}
-        </div>
+        {userRole !== 'admin' && (
+          <div className={`flex-1 text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'} transition-colors duration-1000`}> {/* Added transition */}
+            {task.name}
+          </div>
+        )}
       </div>
 
-      <div className="relative h-8 mb-2">
+      <div className="relative h-8 mb-2 transition-colors duration-1000"> {/* Added transition */}
         <div
-          className={`absolute h-full rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}
+          className={`absolute h-full rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} transition-colors duration-1000`} // Added transition
           style={{ width: '100%' }}
         />
+        {/* Add vertical lines for each day, excluding the last day */}
+        {Array.from({ length: totalDuration - 1 }, (_, i) => (
+          <div
+            key={i}
+            className={`absolute h-full border-l ${isDarkMode ? 'border-gray-600' : 'border-gray-200'} transition-colors duration-1000`} // Added transition
+            style={{ left: `${((i + 1) / totalDuration) * 100}%` }}
+          />
+        ))}
         <div
-          className="absolute h-full bg-emerald-200 rounded-lg"
+          className="absolute h-full bg-emerald-200 rounded-lg transition-colors duration-1000" // Added transition
           style={{
             left: `${startPercentage}%`,
             width: `${widthPercentage}%`,
@@ -90,33 +100,38 @@ function SortableTask({ task, isDarkMode, userRole, updateTaskDuration, currentD
         >
           {progressPercentage > 0 && (
             <div
-              className="absolute h-full bg-emerald-500 rounded-l-lg"
+              className="absolute h-full bg-emerald-500 rounded-l-lg transition-colors duration-1000" // Added transition
               style={{
                 width: `${progressPercentage}%`,
               }}
             />
           )}
-          <div className={`absolute inset-0 flex items-center justify-center text-sm font-medium ${isDarkMode ? 'text-emerald-900' : 'text-emerald-900'}`}>
+          <div className={`absolute inset-0 flex items-center justify-center text-sm font-medium ${isDarkMode ? 'text-emerald-900' : 'text-emerald-900'} transition-colors duration-1000`}> {/* Added transition */}
             {task.duration}j
           </div>
         </div>
       </div>
 
       {userRole === 'admin' && (
-        <div className="flex items-center gap-2">
-          <label className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Duration (days):</label>
+        <div className="flex items-center gap-2 transition-colors duration-1000"> {/* Added transition */}
+          <div className={`flex-1 text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'} transition-colors duration-1000`}> {/* Added transition */}
+            {task.name}
+          </div>
+          <label className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} transition-colors duration-1000`}> {/* Added transition */}
+            Duration (days):
+          </label>
           <input
             type="number"
             value={task.duration}
             onChange={(e) => updateTaskDuration(task.id, parseInt(e.target.value) || 1)}
-            className={`w-20 px-2 py-1 border rounded ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'}`}
+            className={`w-20 px-2 py-1 border rounded ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} transition-colors duration-1000`} // Added transition
             min="1"
           />
           <button
             onClick={() => openRemoveModal(task.id)}
-            className={`px-2 py-1 rounded-md ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} border hover:bg-opacity-80`}
+            className={`px-2 py-1 rounded-md ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} border hover:bg-opacity-80 transition-colors duration-1000`} // Added transition
           >
-            <Trash className="w-4 h-4" />
+            <Trash className="w-4 h-4 transition-colors duration-1000" /> {/* Added transition */}
           </button>
         </div>
       )}
