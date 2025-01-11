@@ -61,9 +61,9 @@ function SortableTask({ task, isDarkMode, userRole, updateTaskDuration, currentD
     <div
       ref={setNodeRef}
       style={style}
-      className="mb-4"
+      className={`mb-4 p-4 rounded-lg shadow-sm ${isDarkMode ? 'bg-gray-800' : 'bg-white'} transition-colors duration-1000`} // Added rounded corners and padding
     >
-      <div className="flex items-center mb-1">
+      <div className="flex items-center mb-2">
         <div
           {...attributes}
           {...listeners}
@@ -71,37 +71,39 @@ function SortableTask({ task, isDarkMode, userRole, updateTaskDuration, currentD
         >
           <GripVertical className="w-4 h-4 text-gray-500" />
         </div>
-        <div className={`w-1/4 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+        <div className={`flex-1 text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>
           {task.name}
         </div>
-        <div className="w-3/4 relative h-8">
-          <div
-            className={`absolute h-full rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}
-            style={{ width: '100%' }}
-          />
-          <div
-            className="absolute h-full bg-emerald-200 rounded-lg"
-            style={{
-              left: `${startPercentage}%`,
-              width: `${widthPercentage}%`,
-            }}
-          >
-            {progressPercentage > 0 && (
-              <div
-                className="absolute h-full bg-emerald-500 rounded-l-lg"
-                style={{
-                  width: `${progressPercentage}%`,
-                }}
-              />
-            )}
-            <div className={`absolute inset-0 flex items-center justify-center text-sm font-medium ${isDarkMode ? 'text-emerald-900' : 'text-emerald-900'}`}>
-              {task.duration}j
-            </div>
+      </div>
+
+      <div className="relative h-8 mb-2">
+        <div
+          className={`absolute h-full rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}
+          style={{ width: '100%' }}
+        />
+        <div
+          className="absolute h-full bg-emerald-200 rounded-lg"
+          style={{
+            left: `${startPercentage}%`,
+            width: `${widthPercentage}%`,
+          }}
+        >
+          {progressPercentage > 0 && (
+            <div
+              className="absolute h-full bg-emerald-500 rounded-l-lg"
+              style={{
+                width: `${progressPercentage}%`,
+              }}
+            />
+          )}
+          <div className={`absolute inset-0 flex items-center justify-center text-sm font-medium ${isDarkMode ? 'text-emerald-900' : 'text-emerald-900'}`}>
+            {task.duration}j
           </div>
         </div>
       </div>
+
       {userRole === 'admin' && (
-        <div className="flex items-center gap-2 mt-2">
+        <div className="flex items-center gap-2">
           <label className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Duration (days):</label>
           <input
             type="number"
