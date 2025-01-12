@@ -11,6 +11,7 @@ interface Task {
   id: string;
   name: string;
   duration: number;
+  startDay: number; // Add this property
 }
 
 interface User {
@@ -72,11 +73,21 @@ function App() {
   const [newPassword, setNewPassword] = useState('');
   const [newRole, setNewRole] = useState<'admin' | 'viewer'>('viewer');
 
-  const totalDuration = Math.max(...tasks.map((task) => task.duration));
+  const [totalDuration, setTotalDuration] = useState(() => {
+    const savedTotalDuration = localStorage.getItem('totalDuration');
+    return savedTotalDuration ? parseInt(savedTotalDuration) : Math.max(...tasks.map((task) => task.duration));
+  });
 
   useEffect(() => {
     localStorage.setItem('currentDay', currentDay.toString());
   }, [currentDay]);
+
+  useEffect(() => {
+    const maxTaskDuration = Math.max(...tasks.map((task) => task.duration));
+    if (maxTaskDuration > totalDuration) {
+      setTotalDuration(maxTaskDuration);
+    }
+  }, [tasks]);
 
   useEffect(() => {
     localStorage.setItem('title', title);
@@ -107,13 +118,7 @@ function App() {
 
       interval = setInterval(() => {
         const elapsedTime = Math.floor((Date.now() - startTimestamp) / 1000);
-        const elapsedDays = (elapsedTime / (24 * 60 * 60)) * totalDuration;
-        if (elapsedDays >= totalDuration) {
-          setIsRunning(false);
-          setCurrentDay(totalDuration);
-        } else {
-          setCurrentDay(elapsedDays);
-        }
+        setCurrentDay(elapsedTime);
       }, 1000);
     } else {
       setStartTime(null);
@@ -166,6 +171,7 @@ function App() {
       id: `task-${tasks.length + 1}`,
       name: newTaskName,
       duration: newTaskDuration,
+      startDay: 0
     };
     setTasks([...tasks, newTask]);
     setIsAddingTask(false);

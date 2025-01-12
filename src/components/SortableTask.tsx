@@ -7,6 +7,7 @@ interface Task {
   id: string;
   name: string;
   duration: number;
+  startDay: number;
 }
 
 interface SortableTaskProps {
@@ -35,7 +36,7 @@ const SortableTask: React.FC<SortableTaskProps> = ({
   };
 
   const start = 0;
-  const taskProgress = Math.min(Math.max(currentDay - start, 0), task.duration);
+  const taskProgress = Math.min(Math.max(currentDay / (24 * 60 * 60), 0), task.duration);
   const progressPercentage = (taskProgress / task.duration) * 100;
 
   const progressBarRef = useRef<HTMLDivElement>(null);
