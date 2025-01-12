@@ -12,15 +12,42 @@ interface Task {
 }
 
 function App() {
-  const [currentDay, setCurrentDay] = useState(0);
-  const [title, setTitle] = useState('Project Timeline');
+  // Load all states from localStorage on initialization
+  const [currentDay, setCurrentDay] = useState(() => {
+    const savedCurrentDay = localStorage.getItem('currentDay');
+    return savedCurrentDay ? parseInt(savedCurrentDay) : 0;
+  });
+
+  const [title, setTitle] = useState(() => {
+    const savedTitle = localStorage.getItem('title');
+    return savedTitle || 'Project Timeline';
+  });
+
   const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedDarkMode = localStorage.getItem('isDarkMode');
+    return savedDarkMode ? JSON.parse(savedDarkMode) : false;
+  });
+
   const [isRunning, setIsRunning] = useState(false);
   const [, setStartTime] = useState<number | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState<'admin' | 'viewer' | null>(null);
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    const savedIsLoggedIn = localStorage.getItem('isLoggedIn');
+    return savedIsLoggedIn ? JSON.parse(savedIsLoggedIn) : false;
+  });
+
+  const [userRole, setUserRole] = useState<'admin' | 'viewer' | null>(() => {
+    const savedUserRole = localStorage.getItem('userRole');
+    return savedUserRole ? JSON.parse(savedUserRole) : null;
+  });
+
+  const [tasks, setTasks] = useState<Task[]>(() => {
+    const savedTasks = localStorage.getItem('tasks');
+    return savedTasks ? JSON.parse(savedTasks) : initialTasks;
+  });
+
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskDuration, setNewTaskDuration] = useState(1);
@@ -35,21 +62,7 @@ function App() {
 
   const totalDuration = Math.max(...tasks.map((task) => task.duration));
 
-  const handleLogin = (username: string, password: string) => {
-    const user = users.find((u) => u.username === username && u.password === password);
-    if (user) {
-      setIsLoggedIn(true);
-      setUserRole(user.role as 'admin' | 'viewer');
-    } else {
-      alert('Invalid credentials');
-    }
-  };
-
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUserRole(null);
-  };
-
+  // Save all states to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('currentDay', currentDay.toString());
   }, [currentDay]);
@@ -59,9 +72,23 @@ function App() {
   }, [title]);
 
   useEffect(() => {
-    localStorage.setItem('isDarkMode', isDarkMode.toString());
+    localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
+    document.documentElement.classList.toggle('dark', isDarkMode);
   }, [isDarkMode]);
 
+  useEffect(() => {
+    localStorage.setItem('isLoggedIn', JSON.stringify(isLoggedIn));
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    localStorage.setItem('userRole', JSON.stringify(userRole));
+  }, [userRole]);
+
+  useEffect(() => {
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+  }, [tasks]);
+
+  // Timer logic
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isRunning) {
@@ -85,19 +112,28 @@ function App() {
     return () => clearInterval(interval);
   }, [isRunning, totalDuration]);
 
-  useEffect(() => {
-    const savedDarkMode = localStorage.getItem('isDarkMode') === 'true';
-    setIsDarkMode(savedDarkMode);
-    document.documentElement.classList.toggle('dark', savedDarkMode);
-  }, []);
-
-  const toggleDarkMode = () => {
-    const newDarkMode = !isDarkMode;
-    setIsDarkMode(newDarkMode);
-    document.documentElement.classList.toggle('dark', newDarkMode);
-    localStorage.setItem('isDarkMode', newDarkMode.toString());
+  // Login and logout handlers
+  const handleLogin = (username: string, password: string) => {
+    const user = users.find((u) => u.username === username && u.password === password);
+    if (user) {
+      setIsLoggedIn(true);
+      setUserRole(user.role as 'admin' | 'viewer');
+    } else {
+      alert('Invalid credentials');
+    }
   };
 
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUserRole(null);
+  };
+
+  // Dark mode toggle
+  const toggleDarkMode = () => {
+    setIsDarkMode((prevMode: boolean) => !prevMode);
+  };
+
+  // Task management
   const updateTaskDuration = (taskId: string, newDuration: number) => {
     setTasks((prevTasks) =>
       prevTasks.map((task) =>
@@ -107,13 +143,7 @@ function App() {
   };
 
   const removeTask = (taskId: string) => {
-    if (!taskId) {
-      console.error("Task ID is missing.");
-      return;
-    }
-
     setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
-
     setIsRemoveModalOpen(false);
     setTaskToRemove(null);
     setEditedTaskName('');
@@ -162,8 +192,6 @@ function App() {
       setTaskToRemove(taskId);
       setEditedTaskName(task.name);
       setIsRemoveModalOpen(true);
-    } else {
-      console.error("Task not found.");
     }
   };
 
@@ -188,11 +216,7 @@ function App() {
                 onClick={toggleDarkMode}
                 className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} transition-colors duration-1000`}
               >
-                {isDarkMode ? (
-                  <Sun className="w-5 h-5 text-yellow-400 transition-colors duration-1000" />
-                ) : (
-                  <Moon className="w-5 h-5 text-gray-800 transition-colors duration-1000" />
-                )}
+                {isDarkMode ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-gray-800" />}
               </button>
             </div>
             <form
@@ -205,26 +229,26 @@ function App() {
               }}
             >
               <div className="mb-4">
-                <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} transition-colors duration-1000`}>Username</label>
+                <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Username</label>
                 <input
                   type="text"
                   name="username"
-                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} transition-colors duration-1000`}
+                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'}`}
                   required
                 />
               </div>
               <div className="mb-4">
-                <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} transition-colors duration-1000`}>Password</label>
+                <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Password</label>
                 <input
                   type="password"
                   name="password"
-                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} transition-colors duration-1000`}
+                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'}`}
                   required
                 />
               </div>
               <button
                 type="submit"
-                className="w-full px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors duration-1000"
+                className="w-full px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600"
               >
                 Login
               </button>
@@ -234,7 +258,7 @@ function App() {
           <div className={`rounded-lg shadow-lg p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} transition-colors duration-1000`}>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center">
-                <Calendar className={`w-6 h-6 ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'} mr-2 transition-colors duration-1000`} />
+                <Calendar className={`w-6 h-6 ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'} mr-2`} />
                 {isEditingTitle && userRole === 'admin' ? (
                   <input
                     type="text"
@@ -242,12 +266,12 @@ function App() {
                     onChange={(e) => setTitle(e.target.value)}
                     onBlur={() => setIsEditingTitle(false)}
                     onKeyDown={(e) => e.key === 'Enter' && setIsEditingTitle(false)}
-                    className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} border-b-2 border-emerald-500 focus:outline-none bg-transparent transition-colors duration-1000`}
+                    className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} border-b-2 border-emerald-500 focus:outline-none bg-transparent`}
                     autoFocus
                   />
                 ) : (
                   <h1
-                    className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} cursor-pointer hover:text-emerald-600 transition-colors duration-1000`}
+                    className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} cursor-pointer hover:text-emerald-600`}
                     onClick={() => userRole === 'admin' && setIsEditingTitle(true)}
                   >
                     {title}
@@ -257,39 +281,35 @@ function App() {
               <div className="flex items-center gap-4">
                 <button
                   onClick={toggleDarkMode}
-                  className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} transition-colors duration-1000`}
+                  className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}
                 >
-                  {isDarkMode ? (
-                    <Sun className="w-5 h-5 text-yellow-400 transition-colors duration-1000" />
-                  ) : (
-                    <Moon className="w-5 h-5 text-gray-800 transition-colors duration-1000" />
-                  )}
+                  {isDarkMode ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-gray-800" />}
                 </button>
                 {userRole === 'admin' && (
                   <>
                     <button
                       onClick={() => setIsRunning(!isRunning)}
-                      className={`px-4 py-2 rounded ${isRunning ? 'bg-red-500' : 'bg-emerald-500'} text-white transition-colors duration-1000`}
+                      className={`px-4 py-2 rounded ${isRunning ? 'bg-red-500' : 'bg-emerald-500'} text-white`}
                     >
                       {isRunning ? 'Stop' : 'Start'}
                     </button>
                     <button
                       onClick={resetTimer}
-                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors duration-1000"
+                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
                     >
                       Reset
                     </button>
                     <button
                       onClick={() => setIsAddingTask(true)}
-                      className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors duration-1000"
+                      className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
                     >
-                      <Plus className="w-5 h-5 transition-colors duration-1000" />
+                      <Plus className="w-5 h-5" />
                     </button>
                   </>
                 )}
                 <button
                   onClick={handleLogout}
-                  className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors duration-1000"
+                  className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
                 >
                   Logout
                 </button>
