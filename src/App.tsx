@@ -1,14 +1,22 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Moon, Sun, Plus } from 'lucide-react';
+import { Calendar, Moon, Sun, Plus, UserPlus, LogOut, RefreshCw, Play, Square } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import SortableTask from './components/SortableTask';
 import { initialTasks } from './data/tasks';
+import { Tooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
 
 interface Task {
   id: string;
   name: string;
   duration: number;
+}
+
+interface User {
+  username: string;
+  password: string;
+  role: 'admin' | 'viewer';
 }
 
 function App() {
@@ -54,10 +62,15 @@ function App() {
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
   const [editedTaskName, setEditedTaskName] = useState('');
 
-  const [users] = useState([
+  const [users, setUsers] = useState<User[]>([
     { username: 'admin', password: 'admin123', role: 'admin' },
     { username: 'viewer', password: 'viewer123', role: 'viewer' },
   ]);
+
+  const [isAddingUser, setIsAddingUser] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newRole, setNewRole] = useState<'admin' | 'viewer'>('viewer');
 
   const totalDuration = Math.max(...tasks.map((task) => task.duration));
 
@@ -160,6 +173,19 @@ function App() {
     setNewTaskDuration(1);
   };
 
+  const handleAddUser = () => {
+    const newUser: User = {
+      username: newUsername,
+      password: newPassword,
+      role: newRole,
+    };
+    setUsers([...users, newUser]);
+    setIsAddingUser(false);
+    setNewUsername('');
+    setNewPassword('');
+    setNewRole('viewer');
+  };
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -208,10 +234,13 @@ function App() {
               <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} transition-colors duration-1000`}>Login</h2>
               <button
                 onClick={toggleDarkMode}
-                className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} transition-colors duration-1000`}
+                className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}
+                data-tooltip-id="dark-mode-tooltip"
+                data-tooltip-content={isDarkMode ? 'Light Mode' : 'Dark Mode'}
               >
                 {isDarkMode ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-gray-800" />}
               </button>
+              <Tooltip id="dark-mode-tooltip" />
             </div>
             <form
               onSubmit={(e) => {
@@ -276,6 +305,8 @@ function App() {
                 <button
                   onClick={toggleDarkMode}
                   className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'}`}
+                  data-tooltip-id="dark-mode-tooltip"
+                  data-tooltip-content={isDarkMode ? 'Light Mode' : 'Dark Mode'}
                 >
                   {isDarkMode ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-gray-800" />}
                 </button>
@@ -283,30 +314,52 @@ function App() {
                   <>
                     <button
                       onClick={() => setIsRunning(!isRunning)}
-                      className={`px-4 py-2 rounded ${isRunning ? 'bg-red-500' : 'bg-emerald-500'} text-white`}
+                      className={`p-2 rounded ${isRunning ? 'bg-red-500' : 'bg-emerald-500'} text-white`}
+                      data-tooltip-id="start-stop-tooltip"
+                      data-tooltip-content={isRunning ? 'Stop' : 'Start'}
                     >
-                      {isRunning ? 'Stop' : 'Start'}
+                      {isRunning ? <Square className="w-5 h-5" /> : <Play className="w-5 h-5" />}
                     </button>
                     <button
                       onClick={resetTimer}
-                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                      className="p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                      data-tooltip-id="reset-tooltip"
+                      data-tooltip-content="Reset"
                     >
-                      Reset
+                      <RefreshCw className="w-5 h-5" />
                     </button>
                     <button
                       onClick={() => setIsAddingTask(true)}
-                      className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                      className="p-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                      data-tooltip-id="add-task-tooltip"
+                      data-tooltip-content="Add Task"
                     >
                       <Plus className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => setIsAddingUser(true)}
+                      className="p-2 bg-purple-500 text-white rounded-md hover:bg-purple-600"
+                      data-tooltip-id="add-user-tooltip"
+                      data-tooltip-content="Add User"
+                    >
+                      <UserPlus className="w-5 h-5" />
                     </button>
                   </>
                 )}
                 <button
                   onClick={handleLogout}
-                  className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                  className="p-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                  data-tooltip-id="logout-tooltip"
+                  data-tooltip-content="Logout"
                 >
-                  Logout
+                  <LogOut className="w-5 h-5" />
                 </button>
+                <Tooltip id="dark-mode-tooltip" />
+                <Tooltip id="start-stop-tooltip" />
+                <Tooltip id="reset-tooltip" />
+                <Tooltip id="add-task-tooltip" />
+                <Tooltip id="add-user-tooltip" />
+                <Tooltip id="logout-tooltip" />
               </div>
             </div>
 
@@ -337,6 +390,48 @@ function App() {
                   </button>
                   <button
                     onClick={() => setIsAddingTask(false)}
+                    className="ml-2 px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors duration-1000"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {isAddingUser && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-colors duration-1000">
+                <div className={`p-6 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-white'} z-50 transition-colors duration-1000`}>
+                  <h2 className={`text-xl font-bold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'} transition-colors duration-1000`}>Add New User</h2>
+                  <input
+                    type="text"
+                    placeholder="Username"
+                    value={newUsername}
+                    onChange={(e) => setNewUsername(e.target.value)}
+                    className={`w-full px-3 py-2 border rounded mb-4 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} transition-colors duration-1000`}
+                  />
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className={`w-full px-3 py-2 border rounded mb-4 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} transition-colors duration-1000`}
+                  />
+                  <select
+                    value={newRole}
+                    onChange={(e) => setNewRole(e.target.value as 'admin' | 'viewer')}
+                    className={`w-full px-3 py-2 border rounded mb-4 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} transition-colors duration-1000`}
+                  >
+                    <option value="admin">Admin</option>
+                    <option value="viewer">Viewer</option>
+                  </select>
+                  <button
+                    onClick={handleAddUser}
+                    className="px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors duration-1000"
+                  >
+                    Add User
+                  </button>
+                  <button
+                    onClick={() => setIsAddingUser(false)}
                     className="ml-2 px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors duration-1000"
                   >
                     Cancel
