@@ -2,7 +2,6 @@ import React from 'react';
 import { GripVertical, Trash } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useDraggable } from '@dnd-kit/core';
 
 interface Task {
   id: string;
@@ -34,38 +33,16 @@ const SortableTask: React.FC<SortableTaskProps> = ({
     transform: CSS.Transform.toString(transform),
     transition,
   };
+
   const start = 0;
-  const startPercentage = (start / totalDuration) * 100;
   const taskProgress = Math.min(Math.max(currentDay - start, 0), task.duration);
   const progressPercentage = (taskProgress / task.duration) * 100;
-  const [draggedTaskDuration, setDraggedTaskDuration] = React.useState(task.duration);
-
-  React.useEffect(() => {
-    setDraggedTaskDuration(task.duration);
-  }, [task.duration]);
-
-  const progressBarRef = React.useRef<HTMLDivElement>(null);
-  const { setNodeRef: setDragNodeRef, listeners: dragListeners, transform: dragTransform } = useDraggable({id: `drag-${task.id}`,
-  });
-  const handleDragEnd = () => {
-    if (progressBarRef.current) {
-      const progressBarWidth = progressBarRef.current.clientWidth;
-      const deltaX = dragTransform?.x || 0;
-
-      const maxX = progressBarWidth - (draggedTaskDuration / totalDuration) * progressBarWidth;
-      const constrainedX = Math.max(-startPercentage * (progressBarWidth / 100), Math.min(deltaX, maxX));
-      const newDuration = Math.max(1, Math.round(((startPercentage * (progressBarWidth / 100) + constrainedX) / progressBarWidth) * totalDuration));
-
-      setDraggedTaskDuration(newDuration);
-      updateTaskDuration(task.id, newDuration);
-    }
-  };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`mb-4 p-4 rounded-lg shadow-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'} transition-colors duration-1000`}
+      className={`mb-4 p-4 rounded-lg shadow-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'} transition-colors duration-1000 w-full`}
     >
       <div className="flex items-center mb-2">
         <div
@@ -76,13 +53,13 @@ const SortableTask: React.FC<SortableTaskProps> = ({
           <GripVertical className="w-4 h-4 text-gray-500 transition-colors duration-1000" />
         </div>
         {userRole !== 'admin' && (
-          <div className={`flex-1 text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'} transition-colors duration-1000`}>
+          <div className={`flex-1 text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'} transition-colors duration-1000 truncate`}>
             {task.name}
           </div>
         )}
       </div>
 
-      <div className="relative h-8 mb-2 transition-colors duration-1000" ref={progressBarRef}>
+      <div className="relative h-8 mb-2 transition-colors duration-1000">
         <div
           className={`absolute h-full rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} transition-colors duration-1000`}
           style={{ width: '100%' }}
@@ -95,20 +72,11 @@ const SortableTask: React.FC<SortableTaskProps> = ({
           />
         ))}
         <div
-          ref={setDragNodeRef}
-          {...dragListeners}
           style={{
-            left: `${startPercentage}%`,
-            width: `${(draggedTaskDuration / totalDuration) * 100}%`,
-            transform: dragTransform && progressBarRef.current
-              ? `translate3d(${Math.max(-startPercentage * (progressBarRef.current.clientWidth / 100), Math.min(dragTransform.x, progressBarRef.current.clientWidth - (draggedTaskDuration / totalDuration) * progressBarRef.current.clientWidth))}px, 0, 0)`
-              : undefined,
+            left: `${start}%`,
+            width: `${(task.duration / totalDuration) * 100}%`,
           }}
           className="absolute h-full bg-emerald-200 rounded-lg transition-colors duration-1000"
-          onMouseUp={handleDragEnd}
-          onClick={(e) => {
-            e.stopPropagation(); // Prevent click event from propagating
-          }}
         >
           {progressPercentage > 0 && (
             <div
@@ -119,14 +87,14 @@ const SortableTask: React.FC<SortableTaskProps> = ({
             />
           )}
           <div className={`absolute inset-0 flex items-center justify-center text-sm font-medium ${isDarkMode ? 'text-emerald-900' : 'text-emerald-900'} transition-colors duration-1000`}>
-            {draggedTaskDuration}j
+            {task.duration}j
           </div>
         </div>
       </div>
 
       {userRole === 'admin' && (
         <div className="flex items-center gap-2 transition-colors duration-1000">
-          <div className={`flex-1 text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'} transition-colors duration-1000`}>
+          <div className={`flex-1 text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'} transition-colors duration-1000 truncate`}>
             {task.name}
           </div>
           <label className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} transition-colors duration-1000`}>

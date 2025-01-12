@@ -12,7 +12,6 @@ interface Task {
 }
 
 function App() {
-  // Load all states from localStorage on initialization
   const [currentDay, setCurrentDay] = useState(() => {
     const savedCurrentDay = localStorage.getItem('currentDay');
     return savedCurrentDay ? parseInt(savedCurrentDay) : 0;
@@ -62,7 +61,6 @@ function App() {
 
   const totalDuration = Math.max(...tasks.map((task) => task.duration));
 
-  // Save all states to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('currentDay', currentDay.toString());
   }, [currentDay]);
@@ -88,7 +86,6 @@ function App() {
     localStorage.setItem('tasks', JSON.stringify(tasks));
   }, [tasks]);
 
-  // Timer logic
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isRunning) {
@@ -112,7 +109,6 @@ function App() {
     return () => clearInterval(interval);
   }, [isRunning, totalDuration]);
 
-  // Login and logout handlers
   const handleLogin = (username: string, password: string) => {
     const user = users.find((u) => u.username === username && u.password === password);
     if (user) {
@@ -128,12 +124,10 @@ function App() {
     setUserRole(null);
   };
 
-  // Dark mode toggle
   const toggleDarkMode = () => {
     setIsDarkMode((prevMode: boolean) => !prevMode);
   };
 
-  // Task management
   const updateTaskDuration = (taskId: string, newDuration: number) => {
     setTasks((prevTasks) =>
       prevTasks.map((task) =>
@@ -233,7 +227,7 @@ function App() {
                 <input
                   type="text"
                   name="username"
-                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'}`}
+                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} transition-colors duration-1000`}
                   required
                 />
               </div>
@@ -242,7 +236,7 @@ function App() {
                 <input
                   type="password"
                   name="password"
-                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'}`}
+                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} transition-colors duration-1000`}
                   required
                 />
               </div>
@@ -398,23 +392,25 @@ function App() {
                 </div>
               </div>
             )}
-          
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={tasks} strategy={verticalListSortingStrategy}>
-                {tasks.map((task) => (
-                  <SortableTask
-                    key={task.id}
-                    task={task}
-                    isDarkMode={isDarkMode}
-                    userRole={userRole}
-                    updateTaskDuration={updateTaskDuration}
-                    currentDay={currentDay}
-                    totalDuration={totalDuration}
-                    openRemoveModal={openRemoveModal}
-                  />
-                ))}
-              </SortableContext>
-            </DndContext>
+
+            <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={tasks} strategy={verticalListSortingStrategy}>
+                  {tasks.map((task) => (
+                    <SortableTask
+                      key={task.id}
+                      task={task}
+                      isDarkMode={isDarkMode}
+                      userRole={userRole}
+                      updateTaskDuration={updateTaskDuration}
+                      currentDay={currentDay}
+                      totalDuration={totalDuration}
+                      openRemoveModal={openRemoveModal}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+            </div>
 
             <div className="mt-6 border-t pt-4">
               <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} transition-colors duration-1000`}>

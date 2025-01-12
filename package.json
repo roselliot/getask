@@ -16,7 +16,8 @@
     "react-beautiful-dnd": "^13.1.1",
     "react-dom": "~18.2.0",
     "react-draggable": "^4.4.6",
-    "react-router-dom": "^7.1.1"
+    "react-router-dom": "^7.1.1",
+    "tailwind": "^4.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
