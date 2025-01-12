@@ -1,142 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Moon, Sun, Plus, Trash, GripVertical } from 'lucide-react';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { Calendar, Moon, Sun, Plus } from 'lucide-react';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import SortableTask from './components/SortableTask';
+import { initialTasks } from './data/tasks';
 
 interface Task {
   id: string;
   name: string;
   duration: number;
-  dependencies: string[];
-}
-
-const initialTasks: Task[] = [
-  { id: 'elec', name: 'Électricité modif (tv+refrigerateur)', duration: 1, dependencies: [] },
-  { id: 'plumb', name: 'Plomberie modif (sdb+balcon)', duration: 1, dependencies: [] },
-  { id: 'tile', name: 'Carrelage (sdb+placard+finition)', duration: 2, dependencies: ['plumb'] },
-  { id: 'alum', name: 'Aluminium (porte+fenêtre+cache rideau)', duration: 1, dependencies: [] },
-  { id: 'plaster', name: 'Platre sdb', duration: 2, dependencies: ['plumb', 'elec'] },
-  { id: 'concrete', name: 'Ponçage', duration: 2, dependencies: ['plaster'] },
-  { id: 'paint', name: 'Peinture', duration: 20, dependencies: ['plaster'] },
-  { id: 'accessories', name: 'Pose des accessoires', duration: 1, dependencies: ['paint'] },
-  { id: 'parquet', name: 'Parquet', duration: 1, dependencies: ['concrete'] },
-  { id: 'woodwork', name: 'Pose menuiserie bois', duration: 1, dependencies: ['paint'] },
-  { id: 'cleaning', name: 'Nettoyage', duration: 1, dependencies: ['woodwork', 'accessories', 'parquet'] },
-];
-
-function SortableTask({ task, isDarkMode, userRole, updateTaskDuration, currentDay, totalDuration, openRemoveModal }: {
-  task: Task;
-  isDarkMode: boolean;
-  userRole: 'admin' | 'viewer' | null;
-  updateTaskDuration: (taskId: string, newDuration: number) => void;
-  removeTask: (taskId: string) => void;
-  currentDay: number;
-  totalDuration: number;
-  openRemoveModal: (taskId: string) => void;
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: task.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  const start = task.dependencies.length === 0 ? 0 : Math.max(...task.dependencies.map((depId) => {
-    const depTask = initialTasks.find((t) => t.id === depId)!;
-    return (depTask.dependencies.length === 0 ? 0 : Math.max(...depTask.dependencies.map((depId) => {
-      const depTask = initialTasks.find((t) => t.id === depId)!;
-      return depTask.duration;
-    }))) + depTask.duration;
-  }));
-
-  const startPercentage = (start / totalDuration) * 100;
-  const widthPercentage = (task.duration / totalDuration) * 100;
-
-  const taskProgress = Math.min(Math.max(currentDay - start, 0), task.duration);
-  const progressPercentage = (taskProgress / task.duration) * 100;
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`mb-4 p-4 rounded-lg shadow-sm ${isDarkMode ? 'bg-gray-800' : 'bg-white'} transition-colors duration-1000`}
-    >
-      <div className="flex items-center mb-2">
-        <div
-          {...attributes}
-          {...listeners}
-          className="p-2 cursor-grab transition-colors duration-1000" // Added transition
-        >
-          <GripVertical className="w-4 h-4 text-gray-500 transition-colors duration-1000" /> {/* Added transition */}
-        </div>
-        {userRole !== 'admin' && (
-          <div className={`flex-1 text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'} transition-colors duration-1000`}> {/* Added transition */}
-            {task.name}
-          </div>
-        )}
-      </div>
-
-      <div className="relative h-8 mb-2 transition-colors duration-1000"> {/* Added transition */}
-        <div
-          className={`absolute h-full rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} transition-colors duration-1000`} // Added transition
-          style={{ width: '100%' }}
-        />
-        {/* Add vertical lines for each day, excluding the last day */}
-        {Array.from({ length: totalDuration - 1 }, (_, i) => (
-          <div
-            key={i}
-            className={`absolute h-full border-l ${isDarkMode ? 'border-gray-600' : 'border-gray-200'} transition-colors duration-1000`} // Added transition
-            style={{ left: `${((i + 1) / totalDuration) * 100}%` }}
-          />
-        ))}
-        <div
-          className="absolute h-full bg-emerald-200 rounded-lg transition-colors duration-1000" // Added transition
-          style={{
-            left: `${startPercentage}%`,
-            width: `${widthPercentage}%`,
-          }}
-        >
-          {progressPercentage > 0 && (
-            <div
-              className="absolute h-full bg-emerald-500 rounded-l-lg transition-colors duration-1000" // Added transition
-              style={{
-                width: `${progressPercentage}%`,
-              }}
-            />
-          )}
-          <div className={`absolute inset-0 flex items-center justify-center text-sm font-medium ${isDarkMode ? 'text-emerald-900' : 'text-emerald-900'} transition-colors duration-1000`}> {/* Added transition */}
-            {task.duration}j
-          </div>
-        </div>
-      </div>
-
-      {userRole === 'admin' && (
-        <div className="flex items-center gap-2 transition-colors duration-1000"> {/* Added transition */}
-          <div className={`flex-1 text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'} transition-colors duration-1000`}> {/* Added transition */}
-            {task.name}
-          </div>
-          <label className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} transition-colors duration-1000`}> {/* Added transition */}
-            Duration (days):
-          </label>
-          <input
-            type="number"
-            value={task.duration}
-            onChange={(e) => updateTaskDuration(task.id, parseInt(e.target.value) || 1)}
-            className={`w-20 px-2 py-1 border rounded ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} transition-colors duration-1000`} // Added transition
-            min="1"
-          />
-          <button
-            onClick={() => openRemoveModal(task.id)}
-            className={`px-2 py-1 rounded-md ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} border hover:bg-opacity-80 transition-colors duration-1000`} // Added transition
-          >
-            <Trash className="w-4 h-4 transition-colors duration-1000" /> {/* Added transition */}
-          </button>
-        </div>
-      )}
-    </div>
-  );
 }
 
 function App() {
@@ -152,7 +24,6 @@ function App() {
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskDuration, setNewTaskDuration] = useState(1);
-  const [newTaskDependencies, setNewTaskDependencies] = useState<string[]>([]);
   const [taskToRemove, setTaskToRemove] = useState<string | null>(null);
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
   const [editedTaskName, setEditedTaskName] = useState('');
@@ -162,22 +33,7 @@ function App() {
     { username: 'viewer', password: 'viewer123', role: 'viewer' },
   ]);
 
-  const getTaskStart = (task: Task): number => {
-    if (!task || !task.dependencies || task.dependencies.length === 0) return 0;
-
-    const dependencyStarts = task.dependencies.map((depId) => {
-      const depTask = tasks.find((t) => t.id === depId);
-      if (!depTask) {
-        console.error(`Dependency task with ID ${depId} not found.`);
-        return 0; // Return 0 if the dependency task is not found
-      }
-      return getTaskStart(depTask) + depTask.duration;
-    });
-
-    return Math.max(...dependencyStarts);
-  };
-
-  const totalDuration = Math.max(...tasks.map((task) => getTaskStart(task) + task.duration));
+  const totalDuration = Math.max(...tasks.map((task) => task.duration));
 
   const handleLogin = (username: string, password: string) => {
     const user = users.find((u) => u.username === username && u.password === password);
@@ -256,15 +112,7 @@ function App() {
       return;
     }
 
-    setTasks((prevTasks) => {
-      if (!prevTasks || !Array.isArray(prevTasks)) {
-        console.error("Tasks array is invalid.");
-        return prevTasks;
-      }
-
-      const updatedTasks = prevTasks.filter((task) => task.id !== taskId);
-      return updatedTasks;
-    });
+    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
 
     setIsRemoveModalOpen(false);
     setTaskToRemove(null);
@@ -281,13 +129,11 @@ function App() {
       id: `task-${tasks.length + 1}`,
       name: newTaskName,
       duration: newTaskDuration,
-      dependencies: newTaskDependencies,
     };
     setTasks([...tasks, newTask]);
     setIsAddingTask(false);
     setNewTaskName('');
     setNewTaskDuration(1);
-    setNewTaskDependencies([]);
   };
 
   const sensors = useSensors(
@@ -297,13 +143,13 @@ function App() {
     })
   );
 
-  const handleDragEnd = (event: any) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
-    if (active.id !== over.id) {
+    if (active.id !== over?.id) {
       setTasks((tasks) => {
         const oldIndex = tasks.findIndex((task) => task.id === active.id);
-        const newIndex = tasks.findIndex((task) => task.id === over.id);
+        const newIndex = tasks.findIndex((task) => task.id === over?.id);
 
         return arrayMove(tasks, oldIndex, newIndex);
       });
@@ -363,9 +209,7 @@ function App() {
                 <input
                   type="text"
                   name="username"
-                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 ${
-                    isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'
-                  } transition-colors duration-1000`}
+                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} transition-colors duration-1000`}
                   required
                 />
               </div>
@@ -374,9 +218,7 @@ function App() {
                 <input
                   type="password"
                   name="password"
-                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 ${
-                    isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'
-                  } transition-colors duration-1000`}
+                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} transition-colors duration-1000`}
                   required
                 />
               </div>
@@ -463,36 +305,16 @@ function App() {
                     placeholder="Task Name"
                     value={newTaskName}
                     onChange={(e) => setNewTaskName(e.target.value)}
-                    className={`w-full px-3 py-2 border rounded mb-4 ${
-                      isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'
-                    } transition-colors duration-1000`}
+                    className={`w-full px-3 py-2 border rounded mb-4 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} transition-colors duration-1000`}
                   />
                   <input
                     type="number"
                     placeholder="Duration (days)"
                     value={newTaskDuration}
                     onChange={(e) => setNewTaskDuration(parseInt(e.target.value) || 1)}
-                    className={`w-full px-3 py-2 border rounded mb-4 ${
-                      isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'
-                    } transition-colors duration-1000`}
+                    className={`w-full px-3 py-2 border rounded mb-4 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} transition-colors duration-1000`}
                     min="1"
                   />
-                  <select
-                    multiple
-                    value={newTaskDependencies}
-                    onChange={(e) =>
-                      setNewTaskDependencies(Array.from(e.target.selectedOptions, (option) => option.value))
-                    }
-                    className={`w-full px-3 py-2 border rounded mb-4 ${
-                      isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'
-                    } transition-colors duration-1000`}
-                  >
-                    {tasks.map((task) => (
-                      <option key={task.id} value={task.id}>
-                        {task.name}
-                      </option>
-                    ))}
-                  </select>
                   <button
                     onClick={handleAddTask}
                     className="px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors duration-1000"
@@ -520,9 +342,7 @@ function App() {
                     type="text"
                     value={editedTaskName}
                     onChange={(e) => setEditedTaskName(e.target.value)}
-                    className={`w-full px-3 py-2 border rounded mb-4 ${
-                      isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'
-                    } transition-colors duration-1000`}
+                    className={`w-full px-3 py-2 border rounded mb-4 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} transition-colors duration-1000`}
                     placeholder="Edit task name"
                   />
                   <div className="flex gap-2">
@@ -568,7 +388,6 @@ function App() {
                     isDarkMode={isDarkMode}
                     userRole={userRole}
                     updateTaskDuration={updateTaskDuration}
-                    removeTask={removeTask}
                     currentDay={currentDay}
                     totalDuration={totalDuration}
                     openRemoveModal={openRemoveModal}
