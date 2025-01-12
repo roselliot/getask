@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { GripVertical, Trash } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -38,11 +38,45 @@ const SortableTask: React.FC<SortableTaskProps> = ({
   const taskProgress = Math.min(Math.max(currentDay - start, 0), task.duration);
   const progressPercentage = (taskProgress / task.duration) * 100;
 
+  const progressBarRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+  const [barPosition, setBarPosition] = useState(start);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging.current || !progressBarRef.current) return;
+
+    const progressBarRect = progressBarRef.current.getBoundingClientRect();
+    const emeraldBarWidth = (task.duration / totalDuration) * progressBarRect.width;
+    const offsetX = e.clientX - progressBarRect.left;
+
+    // Constrain the bar within the progress bar bounds
+    const minX = 0;
+    const maxX = progressBarRect.width - emeraldBarWidth;
+    const newPosition = Math.max(minX, Math.min(offsetX, maxX));
+
+    setBarPosition(newPosition);
+  };
+
+  const handleMouseUp = () => {
+    if (!isDragging.current) return;
+
+    isDragging.current = false;
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`mb-4 p-4 rounded-lg shadow-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'} transition-colors duration-1000 w-full`}
+      className={`mb-4 p-4 rounded-lg shadow-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'} transition-colors duration-1000 w-full max-w-full overflow-hidden`}
     >
       <div className="flex items-center mb-2">
         <div
@@ -59,7 +93,7 @@ const SortableTask: React.FC<SortableTaskProps> = ({
         )}
       </div>
 
-      <div className="relative h-8 mb-2 transition-colors duration-1000">
+      <div className="relative h-8 mb-2 transition-colors duration-1000" ref={progressBarRef}>
         <div
           className={`absolute h-full rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} transition-colors duration-1000`}
           style={{ width: '100%' }}
@@ -73,10 +107,11 @@ const SortableTask: React.FC<SortableTaskProps> = ({
         ))}
         <div
           style={{
-            left: `${start}%`,
+            left: `${barPosition}px`,
             width: `${(task.duration / totalDuration) * 100}%`,
           }}
-          className="absolute h-full bg-emerald-200 rounded-lg transition-colors duration-1000"
+          className="absolute h-full bg-emerald-200 rounded-lg transition-colors duration-1000 cursor-pointer"
+          onMouseDown={handleMouseDown}
         >
           {progressPercentage > 0 && (
             <div
