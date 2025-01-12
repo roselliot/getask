@@ -233,7 +233,7 @@ function App() {
                 <input
                   type="text"
                   name="username"
-                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'}`}
+                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'}`}
                   required
                 />
               </div>
@@ -242,7 +242,7 @@ function App() {
                 <input
                   type="password"
                   name="password"
-                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'}`}
+                  className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'}`}
                   required
                 />
               </div>
@@ -255,7 +255,7 @@ function App() {
             </form>
           </div>
         ) : (
-          <div className={`rounded-lg shadow-lg p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} transition-colors duration-1000`}>
+          <div className={`rounded-lg shadow-md p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} transition-colors duration-1000`}>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center">
                 <Calendar className={`w-6 h-6 ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'} mr-2`} />
@@ -398,7 +398,7 @@ function App() {
                 </div>
               </div>
             )}
-
+          
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={tasks} strategy={verticalListSortingStrategy}>
                 {tasks.map((task) => (

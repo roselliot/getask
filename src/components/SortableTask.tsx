@@ -65,7 +65,7 @@ const SortableTask: React.FC<SortableTaskProps> = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`mb-4 p-4 rounded-lg shadow-sm ${isDarkMode ? 'bg-gray-800' : 'bg-white'} transition-colors duration-1000`}
+      className={`mb-4 p-4 rounded-lg shadow-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'} transition-colors duration-1000`}
     >
       <div className="flex items-center mb-2">
         <div
