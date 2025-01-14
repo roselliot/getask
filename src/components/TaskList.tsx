@@ -1,6 +1,6 @@
 import React from 'react';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent, UniqueIdentifier, UniqueIdentifier } from '@dnd-kit/core';
-import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import SortableTask from './SortableTask';
 import { Task } from '../types';
 
@@ -12,7 +12,7 @@ interface TaskListProps {
   currentDay: number;
   totalDuration: number;
   openRemoveModal: (taskId: string) => void;
-  setTasks: (tasks: Task[]) => void;
+  setTasks: (tasks: Task[] | ((prevTasks: Task[]) => Task[])) => void;
 }
 
 const TaskList: React.FC<TaskListProps> = ({
@@ -36,11 +36,11 @@ const TaskList: React.FC<TaskListProps> = ({
     const { active, over } = event;
 
     if (active.id !== over?.id) {
-      setTasks((tasks: any[]) => {
-        const oldIndex = tasks.findIndex((task: { id: UniqueIdentifier; }) => task.id === active.id);
-        const newIndex = tasks.findIndex((task: { id: UniqueIdentifier | undefined; }) => task.id === over?.id);
+      setTasks((prevTasks: Task[]) => {
+        const oldIndex = prevTasks.findIndex((task) => task.id === active.id);
+        const newIndex = prevTasks.findIndex((task) => task.id === over?.id);
 
-        return arrayMove(tasks, oldIndex, newIndex);
+        return arrayMove(prevTasks, oldIndex, newIndex);
       });
     }
   };
