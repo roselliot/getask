@@ -29,7 +29,12 @@ const SortableTask: React.FC<SortableTaskProps> = ({
   totalDuration,
   openRemoveModal,
 }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: task.id });
+  // Disable sorting for viewers
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: task.id,
+    disabled: userRole !== 'admin', // Disable sorting for viewers
+  });
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -44,6 +49,9 @@ const SortableTask: React.FC<SortableTaskProps> = ({
   const [barPosition, setBarPosition] = useState(start);
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    // Prevent dragging for viewers
+    if (userRole !== 'admin') return;
+
     e.preventDefault();
     isDragging.current = true;
     document.addEventListener('mousemove', handleMouseMove);
@@ -51,7 +59,7 @@ const SortableTask: React.FC<SortableTaskProps> = ({
   };
 
   const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging.current || !progressBarRef.current) return;
+    if (!isDragging.current || !progressBarRef.current || userRole !== 'admin') return;
 
     const progressBarRect = progressBarRef.current.getBoundingClientRect();
     const emeraldBarWidth = (task.duration / totalDuration) * progressBarRect.width;
@@ -80,18 +88,19 @@ const SortableTask: React.FC<SortableTaskProps> = ({
       className={`mb-4 p-4 rounded-lg shadow-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'} transition-colors duration-1000 w-full max-w-full overflow-hidden`}
     >
       <div className="flex items-center mb-2">
-        <div
-          {...attributes}
-          {...listeners}
-          className="p-2 cursor-grab transition-colors duration-1000"
-        >
-          <GripVertical className="w-4 h-4 text-gray-500 transition-colors duration-1000" />
-        </div>
-        {userRole !== 'admin' && (
-          <div className={`flex-1 text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'} transition-colors duration-1000 truncate`}>
-            {task.name}
+        {/* Only show drag handle for admins */}
+        {userRole === 'admin' && (
+          <div
+            {...attributes}
+            {...listeners}
+            className="p-2 cursor-grab transition-colors duration-1000"
+          >
+            <GripVertical className="w-4 h-4 text-gray-500 transition-colors duration-1000" />
           </div>
         )}
+        <div className={`flex-1 text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-700'} transition-colors duration-1000 truncate`}>
+          {task.name}
+        </div>
       </div>
 
       <div className="relative h-8 mb-2 transition-colors duration-1000" ref={progressBarRef}>
@@ -111,8 +120,10 @@ const SortableTask: React.FC<SortableTaskProps> = ({
             left: `${barPosition}px`,
             width: `${(task.duration / totalDuration) * 100}%`,
           }}
-          className="absolute h-full bg-emerald-200 rounded-lg transition-colors duration-1000 cursor-pointer"
-          onMouseDown={handleMouseDown}
+          className={`absolute h-full bg-emerald-200 rounded-lg transition-colors duration-1000 ${
+            userRole === 'admin' ? 'cursor-pointer' : 'cursor-default'
+          }`}
+          onMouseDown={userRole === 'admin' ? handleMouseDown : undefined} // Disable click for viewers
         >
           {progressPercentage > 0 && (
             <div
@@ -142,10 +153,12 @@ const SortableTask: React.FC<SortableTaskProps> = ({
             onChange={(e) => updateTaskDuration(task.id, parseInt(e.target.value) || 1)}
             className={`w-20 px-2 py-1 border rounded ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} transition-colors duration-1000`}
             min="1"
+            disabled={userRole !== 'admin'} // Disable input for viewers
           />
           <button
             onClick={() => openRemoveModal(task.id)}
             className={`px-2 py-1 rounded-md ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} border hover:bg-opacity-80 transition-colors duration-1000`}
+            disabled={userRole !== 'admin'} // Disable button for viewers
           >
             <Trash className="w-4 h-4 transition-colors duration-1000" />
           </button>

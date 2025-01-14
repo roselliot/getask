@@ -11,7 +11,7 @@ interface Task {
   id: string;
   name: string;
   duration: number;
-  startDay: number; // Add this property
+  startDay: number;
 }
 
 interface User {
@@ -77,6 +77,13 @@ function App() {
     const savedTotalDuration = localStorage.getItem('totalDuration');
     return savedTotalDuration ? parseInt(savedTotalDuration) : Math.max(...tasks.map((task) => task.duration));
   });
+
+  // Function to handle total duration change
+  const handleTotalDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDuration = parseInt(e.target.value) || 1;
+    setTotalDuration(newDuration);
+    localStorage.setItem('totalDuration', newDuration.toString());
+  };
 
   useEffect(() => {
     localStorage.setItem('currentDay', currentDay.toString());
@@ -171,7 +178,7 @@ function App() {
       id: `task-${tasks.length + 1}`,
       name: newTaskName,
       duration: newTaskDuration,
-      startDay: 0
+      startDay: 0,
     };
     setTasks([...tasks, newTask]);
     setIsAddingTask(false);
@@ -516,6 +523,18 @@ function App() {
             <div className="mt-6 border-t pt-4">
               <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} transition-colors duration-1000`}>
                 <p>Total Duration: {totalDuration} days</p>
+                {userRole === 'admin' && (
+                  <div className="mt-2">
+                    <label className="block text-sm font-medium mb-1">Modify Total Duration (days):</label>
+                    <input
+                      type="number"
+                      value={totalDuration}
+                      onChange={handleTotalDurationChange}
+                      className={`w-20 px-2 py-1 border rounded ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} transition-colors duration-1000`}
+                      min="1"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
