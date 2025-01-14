@@ -1,4 +1,4 @@
-import { Task } from '../types';
+import { Task, User } from '../types/types';
 
 export const initialTasks: Task[] = [
   { id: 'elec', name: 'Electricity', duration: 1, startDay: 0 },
@@ -12,4 +12,9 @@ export const initialTasks: Task[] = [
   { id: 'parquet', name: 'Parquet', duration: 1, startDay: 0 },
   { id: 'woodwork', name: 'Woodwork', duration: 1, startDay: 0 },
   { id: 'cleaning', name: 'Cleaning', duration: 1, startDay: 0 },
+];
+
+export const initialUsers: User[] = [
+  { username: 'admin', password: 'admin123', role: 'admin' },
+  { username: 'viewer', password: 'viewer123', role: 'viewer' },
 ];
