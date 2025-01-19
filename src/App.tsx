@@ -6,19 +6,8 @@ import SortableTask from './components/SortableTask';
 import { initialTasks } from './data/tasks';
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
-
-interface Task {
-  id: string;
-  name: string;
-  duration: number;
-  startDay: number;
-}
-
-interface User {
-  username: string;
-  password: string;
-  role: 'admin' | 'viewer';
-}
+import { groupTasksByCategory } from './utils/taskUtils';
+import { Task, User } from './types/types';
 
 function App() {
   const [currentDay, setCurrentDay] = useState(() => {
@@ -59,6 +48,7 @@ function App() {
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskDuration, setNewTaskDuration] = useState(1);
+  const [newTaskCategory, setNewTaskCategory] = useState<Task['category']>('Electrical'); // Default to 'Electrical'
   const [taskToRemove, setTaskToRemove] = useState<string | null>(null);
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
   const [editedTaskName, setEditedTaskName] = useState('');
@@ -78,7 +68,8 @@ function App() {
     return savedTotalDuration ? parseInt(savedTotalDuration) : Math.max(...tasks.map((task) => task.duration));
   });
 
-  // Function to handle total duration change
+  const tasksByCategory = groupTasksByCategory(tasks);
+
   const handleTotalDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDuration = parseInt(e.target.value) || 1;
     setTotalDuration(newDuration);
@@ -179,11 +170,14 @@ function App() {
       name: newTaskName,
       duration: newTaskDuration,
       startDay: 0,
+      category: newTaskCategory, // Use the validated category
+      status: 'Not Started',
     };
     setTasks([...tasks, newTask]);
     setIsAddingTask(false);
     setNewTaskName('');
     setNewTaskDuration(1);
+    setNewTaskCategory('Electrical'); // Reset to default category
   };
 
   const handleAddUser = () => {
@@ -395,6 +389,25 @@ function App() {
                     className={`w-full px-3 py-2 border rounded mb-4 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} transition-colors duration-1000`}
                     min="1"
                   />
+                  <select
+                    value={newTaskCategory}
+                    onChange={(e) => setNewTaskCategory(e.target.value as Task['category'])} // Cast to Task['category']
+                    className={`w-full px-3 py-2 border rounded mb-4 ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} transition-colors duration-1000`}
+                  >
+                    <option value="Electrical">Electrical</option>
+                    <option value="Plumbing">Plumbing</option>
+                    <option value="Tiling">Tiling</option>
+                    <option value="Painting">Painting</option>
+                    <option value="Aluminium">Aluminium</option>
+                    <option value="Plaster">Plaster</option>
+                    <option value="Concrete">Concrete</option>
+                    <option value="Accessories">Accessories</option>
+                    <option value="Parquet">Parquet</option>
+                    <option value="Woodwork">Woodwork</option>
+                    <option value="Cleaning">Cleaning</option>
+                    <option value="Carpentry">Carpentry</option>
+                    <option value="Finishing">Finishing</option>
+                  </select>
                   <button
                     onClick={handleAddTask}
                     className="px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors duration-1000"
@@ -502,22 +515,27 @@ function App() {
             )}
 
             <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={tasks} strategy={verticalListSortingStrategy}>
-                  {tasks.map((task) => (
-                    <SortableTask
-                      key={task.id}
-                      task={task}
-                      isDarkMode={isDarkMode}
-                      userRole={userRole}
-                      updateTaskDuration={updateTaskDuration}
-                      currentDay={currentDay}
-                      totalDuration={totalDuration}
-                      openRemoveModal={openRemoveModal}
-                    />
-                  ))}
-                </SortableContext>
-              </DndContext>
+              {Object.entries(tasksByCategory).map(([category, tasks]) => (
+                <div key={category} className="mb-6">
+                  <h2 className={`text-xl font-bold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>{category}</h2>
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                    <SortableContext items={tasks} strategy={verticalListSortingStrategy}>
+                      {tasks.map((task) => (
+                        <SortableTask
+                          key={task.id}
+                          task={task}
+                          isDarkMode={isDarkMode}
+                          userRole={userRole}
+                          updateTaskDuration={updateTaskDuration}
+                          currentDay={currentDay}
+                          totalDuration={totalDuration}
+                          openRemoveModal={openRemoveModal}
+                        />
+                      ))}
+                    </SortableContext>
+                  </DndContext>
+                </div>
+              ))}
             </div>
 
             <div className="mt-6 border-t pt-4">

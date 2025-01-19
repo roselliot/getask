@@ -1,14 +1,9 @@
+// SortableTask.tsx
 import React, { useState, useRef } from 'react';
 import { GripVertical, Trash } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-
-interface Task {
-  id: string;
-  name: string;
-  duration: number;
-  startDay: number;
-}
+import { Task } from '../types/types';
 
 interface SortableTaskProps {
   task: Task;
@@ -29,10 +24,9 @@ const SortableTask: React.FC<SortableTaskProps> = ({
   totalDuration,
   openRemoveModal,
 }) => {
-  // Disable sorting for viewers
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: task.id,
-    disabled: userRole !== 'admin', // Disable sorting for viewers
+    disabled: userRole !== 'admin',
   });
 
   const style = {
@@ -49,7 +43,6 @@ const SortableTask: React.FC<SortableTaskProps> = ({
   const [barPosition, setBarPosition] = useState(start);
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Prevent dragging for viewers
     if (userRole !== 'admin') return;
 
     e.preventDefault();
@@ -65,7 +58,6 @@ const SortableTask: React.FC<SortableTaskProps> = ({
     const emeraldBarWidth = (task.duration / totalDuration) * progressBarRect.width;
     const offsetX = e.clientX - progressBarRect.left;
 
-    // Constrain the bar within the progress bar bounds
     const minX = 0;
     const maxX = progressBarRect.width - emeraldBarWidth;
     const newPosition = Math.max(minX, Math.min(offsetX, maxX));
@@ -88,7 +80,6 @@ const SortableTask: React.FC<SortableTaskProps> = ({
       className={`mb-4 p-4 rounded-lg shadow-xl ${isDarkMode ? 'bg-gray-800' : 'bg-white'} transition-colors duration-1000 w-full max-w-full overflow-hidden`}
     >
       <div className="flex items-center mb-2">
-        {/* Only show drag handle for admins */}
         {userRole === 'admin' && (
           <div
             {...attributes}
@@ -123,7 +114,7 @@ const SortableTask: React.FC<SortableTaskProps> = ({
           className={`absolute h-full bg-emerald-200 rounded-lg transition-colors duration-1000 ${
             userRole === 'admin' ? 'cursor-pointer' : 'cursor-default'
           }`}
-          onMouseDown={userRole === 'admin' ? handleMouseDown : undefined} // Disable click for viewers
+          onMouseDown={userRole === 'admin' ? handleMouseDown : undefined}
         >
           {progressPercentage > 0 && (
             <div
@@ -153,12 +144,12 @@ const SortableTask: React.FC<SortableTaskProps> = ({
             onChange={(e) => updateTaskDuration(task.id, parseInt(e.target.value) || 1)}
             className={`w-20 px-2 py-1 border rounded ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} transition-colors duration-1000`}
             min="1"
-            disabled={userRole !== 'admin'} // Disable input for viewers
+            disabled={userRole !== 'admin'}
           />
           <button
             onClick={() => openRemoveModal(task.id)}
             className={`px-2 py-1 rounded-md ${isDarkMode ? 'bg-gray-700 text-gray-100 border-gray-600' : 'bg-white text-gray-800 border-gray-300'} border hover:bg-opacity-80 transition-colors duration-1000`}
-            disabled={userRole !== 'admin'} // Disable button for viewers
+            disabled={userRole !== 'admin'}
           >
             <Trash className="w-4 h-4 transition-colors duration-1000" />
           </button>
